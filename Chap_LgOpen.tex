@@ -1,68 +1,4 @@
-\documentclass[letterpaper,12pt]{article}
-\usepackage{array}
-\usepackage{threeparttable}
-\usepackage{geometry}
-\geometry{letterpaper,tmargin=1in,bmargin=1in,lmargin=0.5in,rmargin=0.5in}
-\usepackage{fancyhdr,lastpage}
-\pagestyle{fancy}
-\lhead{}
-\chead{}
-\rhead{}
-\lfoot{\footnotesize\textsl{OLG, CHP 18}}
-\cfoot{}
-\rfoot{\footnotesize\textsl{Page \thepage\ of \pageref{LastPage}}}
-\renewcommand\headrulewidth{0pt}
-\renewcommand\footrulewidth{0pt}
-\usepackage[format=hang,font=normalsize,labelfont=bf]{caption}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{amsthm}
-\usepackage{natbib}
-\usepackage{upgreek}
-\usepackage{setspace}
-\usepackage{float,color}
-\usepackage[pdftex]{graphicx}
-\usepackage{hyperref}
-\usepackage{mathrsfs}
-\usepackage{dsfont}
-\usepackage{graphicx}
-\usepackage{listings}
-\hypersetup{colorlinks,linkcolor=red,urlcolor=blue,citecolor=red}
-\theoremstyle{definition}
-\newtheorem{theorem}{Theorem}
-\newtheorem{acknowledgement}[theorem]{Acknowledgement}
-\newtheorem{algorithm}[theorem]{Algorithm}
-\newtheorem{axiom}[theorem]{Axiom}
-\newtheorem{case}[theorem]{Case}
-\newtheorem{claim}[theorem]{Claim}
-\newtheorem{conclusion}[theorem]{Conclusion}
-\newtheorem{condition}[theorem]{Condition}
-\newtheorem{conjecture}[theorem]{Conjecture}
-\newtheorem{corollary}[theorem]{Corollary}
-\newtheorem{criterion}[theorem]{Criterion}
-\newtheorem{definition}[theorem]{Definition}
-\newtheorem{derivation}{Derivation} % Number derivations on their own
-\newtheorem{example}[theorem]{Example}
-\newtheorem{exercise}[theorem]{Exercise}
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{notation}[theorem]{Notation}
-\newtheorem{problem}[theorem]{Problem}
-\newtheorem{proposition}{Proposition} % Number propositions on their own
-\newtheorem{remark}[theorem]{Remark}
-\newtheorem{solution}[theorem]{Solution}
-\newtheorem{summary}[theorem]{Summary}
-%\numberwithin{equation}{section}
-\bibliographystyle{aer}
-\newcommand\ve{\varepsilon}
-\newcommand\cov{\text{Cov}}
-\newcommand\var{\text{Var}}
-\newcommand\argmax{\text{argmax}}
-\newcommand\boldline{\arrayrulewidth{1pt}\hline}
-
-\begin{document}
-
-\title{Chapter 18}
-\maketitle
+%!TEX root = ../OGtextbook.tex
 
 In this chapter, we take model an economy in which two countries that each look like the the $S$-period-lived agent economies from Chapter \ref{Chap_SperSimp}. In contrast to a small open economy model, changes within a country in the large open economy model can affect equilibrium interest rates. We call one country the Home country and the other country the Foreign country, where \textit{Home} and \textit{Foreign} are not relative terms but are fixed country names.
 
@@ -98,13 +34,6 @@ We assume that capital is mobile and that labor is not mobile. That is, Home cou
     \begin{equation}\tag{\ref{EqLgOpenHHchCES}}
       c_{h,s,t}= \biggl[(1 - \theta_h)^\frac{1}{\ve_h}\bigl(c^h_{h,s,t}\bigr)^\frac{\ve_h-1}{\ve_h} + (\theta_h)^\frac{1}{\ve_h}\bigl(c^f_{h,s,t}\bigr)^\frac{\ve_h-1}{\ve_h}\biggr]^\frac{\ve_h}{\ve_h-1} \quad\forall s,t
     \end{equation}
-
-    \textcolor{red}{In the Cobb-Douglas case where $\ve_h=1$, the expression for aggregate consumption is the following.}
-
-    \begin{equation}\label{EqLgOpenHHchCobb}
-      c_{h,s,t}= \frac{1}{(1-\theta_h)^{1-\theta_h}(\theta_h)^{\theta_h}} \left(c^h_{h,s,t}\right)^{1-\theta_h}\left(c^f_{h,s,t}\right)^{\theta_h} \quad\forall t
-    \end{equation}
-
     Dividing \eqref{EqLgOpenHHfocChh} by \eqref{EqLgOpenHHfocChf} gives the following relationship.
     \begin{equation}\label{EqLgOpenHHFracExpDomFor}
       \frac{e_t P^h_t}{P^f_t}\left(\frac{c^h_{h,s,t}}{c^f_{h,s,t}}\right)^{\frac{1}{\ve_h}} = \left(\frac{1-\theta_h}{\theta_h}\right)^{\frac{1}{\ve_h}} \quad\forall s,t
@@ -126,10 +55,6 @@ We assume that capital is mobile and that labor is not mobile. That is, Home cou
       P_t = \frac{1}{(1-\theta_h)^{1-\theta_h}(\theta_h)^{\theta_h}} \left(P^h_t\right)^{1-\theta_h}\left(\frac{P^f_t}{e_t}\right)^{\theta_h} \quad\forall t
     \end{equation}
 
-    \textcolor{red}{In the Cobb-Douglas case where $\ve_h=1$, the expression for aggregate price is the following.}
-    \begin{equation}\tag{\ref{EqLgOpenHHaggPrCobb}}
-      P_t = \left(P^h_t\right)^{1-\theta_h}\left(\frac{P^f_t}{e_t}\right)^{\theta_h} \quad\forall t
-    \end{equation}
 
   \subsection{Foreign household demand for country-specific consumption}\label{SecLgOpenHHforSpec}
 
@@ -406,10 +331,10 @@ We assume that capital is mobile and that labor is not mobile. That is, Home cou
 
   \textcolor{red}{I am not sure about these two resource constraints, but I think they are redundant by Walra's Law. In particular, they should be something like $Y = C + I + NX$. But my intuition is that net exports have to be zero in this model because the value of imports must equal the value of exports.}
   \begin{equation}\label{EqLgOpenMC_Yh}
-    Y_{h,t} = C^h_{h,t} + C^h_{f,t} + K^h_{h,t+1} - (1 - \delta_h)K^h_{h,t} + K^h_{f,t+1}- (1 - \delta_f)K^h_{f,t}\quad\forall t
+    Y_{h,t} = C^h_{h,t} + C^h_{f,t} + K_{h,t+1} - (1 - \delta_h)K_{h,t} \quad\forall t
   \end{equation}
   \begin{equation}\label{EqLgOpenMC_Yf}
-    Y_{f,t} = C^f_{f,t} + C^f_{h,t} + K^f_{f,t+1} - (1 - \delta_f)K^f_{f,t} + K^f_{h,t+1}- (1 - \delta_h)K^f_{h,t} \quad\forall t
+    Y_{f,t} = C^f_{f,t} + C^f_{h,t} + K_{f,t+1} - (1 - \delta_f)K_{f,t} \quad\forall t
   \end{equation}
 
   This final market clearing equation says that the exchange rate makes the value of exports from the Home country to the foreign country equal to the value of exports from the Foreign country to the Home country. This condition makes net exports in both countries equal to zero (balanced trade).
@@ -430,33 +355,21 @@ We assume that capital is mobile and that labor is not mobile. That is, Home cou
   \section{Steady-state solution method}\label{SecLgOpenSolSS}
 
     \begin{enumerate}
-      \item Guess values for $\bar{P}^h$, $\bar{P}^f$, $\bar{r}^h$, and $\bar{r}^f$.
+      \item Guess values for $\bar{P}^h$, $\bar{P}^f$, $\bar{e}$, and $\bar{r}$.
       \begin{itemize}
-        \item Get $\bar{e}$ immediately from \eqref{EqLgOpenMC_rt}
-        \item Get $\bar{r}$ and $\bar{r}^*$ from \eqref{EqLgOpenFirmAggR_h_Cobb} and \eqref{EqLgOpenFirmAggR_f_Cobb}, respectively
         \item These imply a value for $\bar{w}_h$ if the Home country production function is Cobb-Douglas ($\ve_h=1$) by combining \eqref{EqLgOpenFirmFOCK_H} and \eqref{EqLgOpenFirmFOCL_H}. Otherwise, you have to also make a guess for $\bar{w}_h$ in the outer loop.
         \item These imply a value for $\bar{w}_f$ if the Foreign country production function is Cobb-Douglas ($\ve_f=1$) by combining \eqref{EqLgOpenFirmFOCK_F} and \eqref{EqLgOpenFirmFOCL_F}. Otherwise, you have to also make a guess for $\bar{w}_f$ in the outer loop.
         \item These imply a value for $\bar{P}$ through \eqref{EqLgOpenHHaggPr}.
         \item These imply a value for $\bar{P}^*$ through \eqref{EqLgOpenHHaggPrF}.
       \end{itemize}
-      \item Given $\left(\bar{P}^h, \bar{P}^f, \bar{e}, \bar{P}, \bar{P}^*, \bar{r}^h, \bar{r}^f, \bar{w}_h, \bar{w}_f\right)$, solve each household's lifetime decisions in each country $\{\bar{c}_{h,s},\bar{b}_{h,s+1}\}_{s=1}^S$ and $\{\bar{c}_{f,s},\bar{b}_{f,s+1}\}_{s=1}^S$ using $S-1$ Euler equations from the Home country \eqref{EqLgOpenHHeul_bH} and $S-1$ Euler equations from the Foreign country \eqref{EqLgOpenHHeul_bF}.
-      \item Solve for implied values of $\left(\bar{P}^h, \bar{P}^f, \bar{r}^h, \bar{r}^f\right)$ from household optimized values $\{\bar{c}_{h,s},\bar{b}_{h,s+1}\}_{s=1}^S$ and $\{\bar{c}_{f,s},\bar{b}_{f,s+1}\}_{s=1}^S$ by first writing all necessary values in terms of $\left(\bar{P}^h, \bar{P}^f, \bar{r}^h, \bar{r}^f\right)$.
+      \item Given $\left(\bar{P}^h, \bar{P}^f, \bar{e}, \bar{P}, \bar{P}^*, \bar{r}, \bar{w}_h, \bar{w}_f\right)$, solve each household's lifetime decisions in each country $\{\bar{c}_{h,s},\bar{b}_{h,s+1}\}_{s=1}^S$ and $\{\bar{c}_{f,s},\bar{b}_{f,s+1}\}_{s=1}^S$ using $S-1$ Euler equations from the Home country \eqref{EqLgOpenHHeul_bH} and $S-1$ Euler equations from the Foreign country \eqref{EqLgOpenHHeul_bF}.
+      \item Solve for implied values of $\left(\bar{P}^h, \bar{P}^f, \bar{e}, \bar{r}\right)$ from household optimized values $\{\bar{c}_{h,s},\bar{b}_{h,s+1}\}_{s=1}^S$ and $\{\bar{c}_{f,s},\bar{b}_{f,s+1}\}_{s=1}^S$.
       \begin{itemize}
         \item $\bar{L}_h$ and $\bar{L}_f$ are essentially exogenous through \eqref{EqLgOpenMC_Lh} and \eqref{EqLgOpenMC_Lf}.
-        \item $\bar{e}$ can be written in terms of $\bar{r}_f$ and $\bar{r}_h$ using \eqref{EqLgOpenMC_rt}.
-        \item $\bar{P}$ and $\bar{P}^*$ can be found using the price aggregator equations \eqref{EqLgOpenHHaggPr} and \eqref{EqLgOpenHHaggPrF}.
-        \item Find $\bar{c}_{h,s}^h, \bar{c}_{h,s}^f, \bar{c}_{f,s}^f, \bar{c}_{f,s}^h$ using equations \eqref{EqLgOpenHHDemChh}, \eqref{EqLgOpenHHDemChf}, \eqref{EqLgOpenHHDemCff}, \eqref{EqLgOpenHHDemCfh} since we know aggregate consumption.
-        \item Use the capital market clearing conditions, \eqref{EqLgOpenMC_Kh} and \eqref{EqLgOpenMC_Kh}, and firm capital demand ratios,  \eqref{EqLgOpenFirmFracCapForDom} and \eqref{EqLgOpenFirmFracCapDomFor}, to find $\bar{K}_h^h, \bar{K}_h^f, \bar{K}_f^f, \bar{K}_f^h$ in terms of the four variables.
-        \item We can use intermediate capital to write $\bar{K}_h, \bar{K}_f, \bar{Y}_h, \bar{Y}_f$ in terms of the four variables using \eqref{EqLgOpenFirmKhCES}, \eqref{EqLgOpenFirmKfCES}, \eqref{EqLgOpenProdFunc_H}, and \eqref{EqLgOpenProdFunc_F} respectively.
-        \item $\bar{r}$ and $\bar{r}^*$ can be found using the capital interest aggregator equations \eqref{EqLgOpenFirmAggR_h} and \eqref{EqLgOpenFirmAggR_f}.
-      \end{itemize}
-      \item The equations that will be used as the four Euler Errors are:
-      \begin{itemize}
-        \item Resource constraints: \eqref{EqLgOpenMC_Yh} and \eqref{EqLgOpenMC_Yf}.
-        \item Interest rates from firm's problem: \eqref{EqLgOpenFirmFOCK_H} and \eqref{EqLgOpenFirmFOCK_F}.
-        \item Note that equation \eqref{EqLgOpenMC_et} is extra (redundant Walras' equation?).
+        \item Capital market clearing \eqref{EqLgOpenMC_Ktot} and the two firm capital demand equations \eqref{EqLgOpenFirmFOCK_H} and \eqref{EqLgOpenFirmFOCK_F} determine $\bar{K}_h$, $\bar{K}_f$ and the new value of $\bar{r}$.
+        \item Solve for new $\bar{P}^h$ using \eqref{EqLgOpenHHfocChh}
+        \item Solve for new $\bar{P}^f$ using \eqref{EqLgOpenHHfocCff}
+        \item Solve for new $\bar{e}$ using \eqref{EqLgOpenMC_et}
       \end{itemize}
       \item Iterate until find fixed point.
     \end{enumerate}
-
-\end{document}
