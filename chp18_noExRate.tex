@@ -419,29 +419,30 @@ We assume that capital is mobile and that labor is not mobile. That is, Home cou
   \section{Steady-state solution method}\label{SecLgOpenSolSS}
 
     \begin{enumerate}
-      \item Guess values for $\bar{P}^h$, $\bar{P}^f$, $\bar{r}^h$, and $\bar{r}^f$.
+      \item Since $P^*_1 = 1$, then $\bar{P}^* = 1$ in steady-state.
+      \item Guess values for $\bar{P}^h$, $\bar{r}^h$, and $\bar{r}^f$.
       \begin{itemize}
-        \item Get $\bar{r}$ and $\bar{r}^*$ from \eqref{EqLgOpenFirmAggR_h_Cobb} and \eqref{EqLgOpenFirmAggR_f_Cobb}, respectively
+        \item Get $\bar{P}^f$ from \eqref{EqLgOpenHHaggPrF} since $\bar{P}^* = 1$.
+        \item These imply a value for $\bar{P}$ through \eqref{EqLgOpenHHaggPr}.
+        \item Get $\bar{r}$ and $\bar{r}^*$ from \eqref{EqLgOpenFirmAggR_h} and \eqref{EqLgOpenFirmAggR_f}, respectively
         \item These imply a value for $\bar{w}_h$ if the Home country production function is Cobb-Douglas ($\ve_h=1$) by combining \eqref{EqLgOpenFirmFOCK_H} and \eqref{EqLgOpenFirmFOCL_H}. Otherwise, you have to also make a guess for $\bar{w}_h$ in the outer loop.
         \item These imply a value for $\bar{w}_f$ if the Foreign country production function is Cobb-Douglas ($\ve_f=1$) by combining \eqref{EqLgOpenFirmFOCK_F} and \eqref{EqLgOpenFirmFOCL_F}. Otherwise, you have to also make a guess for $\bar{w}_f$ in the outer loop.
-        \item These imply a value for $\bar{P}$ through \eqref{EqLgOpenHHaggPr}.
-        \item These imply a value for $\bar{P}^*$ through \eqref{EqLgOpenHHaggPrF}.
       \end{itemize}
       \item Given $\left(\bar{P}^h, \bar{P}^f, \bar{P}, \bar{P}^*, \bar{r}^h, \bar{r}^f, \bar{w}_h, \bar{w}_f\right)$, solve each household's lifetime decisions in each country $\{\bar{c}_{h,s},\bar{b}_{h,s+1}\}_{s=1}^S$ and $\{\bar{c}_{f,s},\bar{b}_{f,s+1}\}_{s=1}^S$ using $S-1$ Euler equations from the Home country \eqref{EqLgOpenHHeul_bH} and $S-1$ Euler equations from the Foreign country \eqref{EqLgOpenHHeul_bF}.
-      \item Solve for implied values of $\left(\bar{P}^h, \bar{P}^f, \bar{r}^h, \bar{r}^f\right)$ from household optimized values $\{\bar{c}_{h,s},\bar{b}_{h,s+1}\}_{s=1}^S$ and $\{\bar{c}_{f,s},\bar{b}_{f,s+1}\}_{s=1}^S$ by first writing all necessary values in terms of $\left(\bar{P}^h, \bar{P}^f, \bar{r}^h, \bar{r}^f\right)$.
+
+      \item Solve for implied values of $\left(\bar{P}^h, \bar{r}^h, \bar{r}^f\right)$ from household optimized values $\{\bar{c}_{h,s},\bar{b}_{h,s+1}\}_{s=1}^S$ and $\{\bar{c}_{f,s},\bar{b}_{f,s+1}\}_{s=1}^S$ by first writing all necessary values in terms of $\left(\bar{P}^h, \bar{r}^h, \bar{r}^f\right)$.
       \begin{itemize}
         \item $\bar{L}_h$ and $\bar{L}_f$ are essentially exogenous through \eqref{EqLgOpenMC_Lh} and \eqref{EqLgOpenMC_Lf}.
-        \item $\bar{P}$ and $\bar{P}^*$ can be found using the price aggregator equations \eqref{EqLgOpenHHaggPr} and \eqref{EqLgOpenHHaggPrF}.
+        \item $\bar{P}$ and $\bar{P}^f$ can be found using the price aggregator equations \eqref{EqLgOpenHHaggPr} and \eqref{EqLgOpenHHaggPrF}.
         \item Find $\bar{c}_{h,s}^h, \bar{c}_{h,s}^f, \bar{c}_{f,s}^f, \bar{c}_{f,s}^h$ using equations \eqref{EqLgOpenHHDemChh}, \eqref{EqLgOpenHHDemChf}, \eqref{EqLgOpenHHDemCff}, \eqref{EqLgOpenHHDemCfh} since we know aggregate consumption.
-        \item Use the capital market clearing conditions, \eqref{EqLgOpenMC_Kh} and \eqref{EqLgOpenMC_Kh}, and firm capital demand ratios,  \eqref{EqLgOpenFirmFracCapForDom} and \eqref{EqLgOpenFirmFracCapDomFor}, to find $\bar{K}_h^h, \bar{K}_h^f, \bar{K}_f^f, \bar{K}_f^h$ in terms of the four variables.
+        \item Use the capital market clearing conditions, \eqref{EqLgOpenMC_Kh} and \eqref{EqLgOpenMC_Kf}, and firm capital demand ratios,  \eqref{EqLgOpenFirmFracCapForDom} and \eqref{EqLgOpenFirmFracCapDomFor}, to find $\bar{K}_h^h, \bar{K}_h^f, \bar{K}_f^f, \bar{K}_f^h$ in terms of the four variables.
         \item We can use intermediate capital to write $\bar{K}_h, \bar{K}_f, \bar{Y}_h, \bar{Y}_f$ in terms of the four variables using \eqref{EqLgOpenFirmKhCES}, \eqref{EqLgOpenFirmKfCES}, \eqref{EqLgOpenProdFunc_H}, and \eqref{EqLgOpenProdFunc_F} respectively.
-        \item $\bar{r}$ and $\bar{r}^*$ can be found using the capital interest aggregator equations \eqref{EqLgOpenFirmAggR_h} and \eqref{EqLgOpenFirmAggR_f}.
+        \item $\bar{r}$ and $\bar{r}^*$ can be found using the capital interest aggregator equations \eqref{EqLgOpenFirmFOCK_H} and \eqref{EqLgOpenFirmFOCK_F}.
       \end{itemize}
-      \item The equations that will be used as the four Euler Errors are:
+      \item The equations that will be used as the three Euler Errors are:
       \begin{itemize}
         \item Resource constraints: \eqref{EqLgOpenMC_Yh} and \eqref{EqLgOpenMC_Yf}.
-        \item Interest rates from firm's problem: \eqref{EqLgOpenFirmFOCK_H} and \eqref{EqLgOpenFirmFOCK_F}.
-        \item Note that equation \eqref{EqLgOpenMC_et} is extra (redundant Walras' equation?).
+        \item Balanced trade equation: \eqref{EqLgOpenMC_et}.
       \end{itemize}
       \item Iterate until find fixed point.
     \end{enumerate}
