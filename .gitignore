@@ -29,3 +29,6 @@ dist/*
 *puf.csv
 */OUTPUT/*
 */__pycache__/*
+*.coverage*
+*.pytest*
+
