@@ -11,13 +11,9 @@ This Python module imports the following module(s):
     utilities.py
 
 This Python module defines the following function(s):
-    feasible()
-    inner_loop()
-    rw_errs()
-    KL_errs()
-    get_SS_root()
-    get_SS_bsct()
-    create_graphs()
+    get_ss_graphs()
+    outer_loop()
+    get_SS()
 ------------------------------------------------------------------------
 '''
 # Import packages
@@ -38,81 +34,18 @@ import utilities as utils
 '''
 
 
-def feasible(bvec, params):
-    '''
-    --------------------------------------------------------------------
-    Check whether a vector of steady-state savings is feasible in that
-    it satisfies the nonnegativity constraints on consumption in every
-    period c_s > 0 and that the aggregate capital stock is strictly
-    positive K > 0
-    --------------------------------------------------------------------
-    INPUTS:
-    bvec   = (S-1,) vector, household savings b_{s+1}
-    params = length 4 tuple, (nvec, A, alpha, delta)
-
-    OTHER FUNCTIONS AND FILES CALLED BY THIS FUNCTION:
-        get_L()
-        get_K()
-        get_w()
-        get_r()
-        get_cvec()
-
-    OBJECTS CREATED WITHIN FUNCTION:
-    nvec     = (S,) vector, exogenous labor supply values n_s
-    A        = scalar > 0, total factor productivity
-    alpha    = scalar in (0, 1), capital share of income
-    delta    = scalar in (0, 1), per-period depreciation rate
-    S        = integer >= 3, number of periods in individual life
-    L        = scalar > 0, aggregate labor
-    K        = scalar, steady-state aggregate capital stock
-    K_cstr   = boolean, =True if K <= 0
-    w_params = length 2 tuple, (A, alpha)
-    w        = scalar, steady-state wage
-    r_params = length 3 tuple, (A, alpha, delta)
-    r        = scalar, steady-state interest rate
-    bvec2    = (S,) vector, steady-state savings distribution plus
-               initial period wealth of zero
-    cvec     = (S,) vector, steady-state consumption by age
-    c_cnstr  = (S,) Boolean vector, =True for elements for which c_s<=0
-    b_cnstr  = (S-1,) Boolean, =True for elements for which b_s causes a
-               violation of the nonnegative consumption constraint
-
-    FILES CREATED BY THIS FUNCTION: None
-
-    RETURNS: b_cnstr, c_cnstr, K_cnstr
-    --------------------------------------------------------------------
-    '''
-    nvec, A, alpha, delta = params
-    S = nvec.shape[0]
-    L = aggr.get_L(nvec)
-    K, K_cstr = aggr.get_K(bvec)
-    if not K_cstr:
-        w_params = (A, alpha)
-        w = firms.get_w(K, L, w_params)
-        r_params = (A, alpha, delta)
-        r = firms.get_r(K, L, r_params)
-        c_params = (nvec, r, w)
-        cvec = hh.get_cons(bvec, 0.0, c_params)
-        c_cstr = cvec <= 0
-        b_cstr = c_cstr[:-1] + c_cstr[1:]
-
-    else:
-        c_cstr = np.ones(S, dtype=bool)
-        b_cstr = np.ones(S - 1, dtype=bool)
-
-    return c_cstr, K_cstr, b_cstr
-
-
 def get_ss_graphs(c_ss, b_ss, home):
     '''
     --------------------------------------------------------------------
-    Plot steady-state results
+    Plot steady-state household results for Home or Foreign country
     --------------------------------------------------------------------
     INPUTS:
     c_ss = (S,) vector, steady-state lifetime consumption
     b_ss = (S-1,) vector, steady-state lifetime savings
+    home = boolean, =True if plot is for Home country. Otherwise, the
+           plot is for the Foreign country
 
-    OTHER FUNCTIONS AND FILES CALLED BY THIS FUNCTION:
+    OTHER FUNCTIONS AND FILES CALLED BY THIS FUNCTION: None
 
     OBJECTS CREATED WITHIN FUNCTION:
     cur_path    = string, path name of current directory
@@ -124,7 +57,7 @@ def get_ss_graphs(c_ss, b_ss, home):
     age_pers    = (S,) vector, ages from 1 to S
 
     FILES CREATED BY THIS FUNCTION:
-        SS_bc.png
+        SS_bc_h.png or SS_bc_f.png
 
     RETURNS: None
     ----------------------------------------------------------------
@@ -166,7 +99,126 @@ def get_ss_graphs(c_ss, b_ss, home):
 def outer_loop(rh_init, rf_init, q_init, args):
     '''
     --------------------------------------------------------------------
-    Bisection method solving for rh, rf, and q that solves for the outer-loop
+    Bisection method solving for rh, rf, and q that solves for the
+    outer-loop
+    --------------------------------------------------------------------
+    INPUTS:
+    rh_init = scalar > 0, initial guess for rh_ss
+    rf_init = scalar > 0, initial guess for rf_ss
+    q_init  = scalar > 0, initial guess for q_ss
+    args    = length 19 tuple, arguments for function
+
+    OTHER FUNCTIONS AND FILES CALLED BY THIS FUNCTION:
+        firms.get_comp_r()
+        firms.get_KLratio()
+        firms.get_w_KL()
+        hh.get_cbvec()
+        aggr.get_L()
+        firms.get_K_ownown()
+        firms.get_r_own_new()
+
+    OBJECTS CREATED WITHIN FUNCTION:
+    S          = integer in [3,80], number of periods an individual
+                 lives
+    nhvec      = (S,) vector, exogenous Home labor supply n_{h,s,t}
+    nfvec      = (S,) vector, exogenous Foreign labor supply n_{h,s,t}
+    beta       = scalar in (0,1), discount factor for each model period
+    sigma      = scalar > 0, coefficient of relative risk aversion
+    alpha_h    = scalar in (0, 1), share parameter in CES production
+                 function of Home intermediate goods producer
+    phi_h      = scalar >= 1, elasticity of substitution in CES
+                 production function of Home intermediate goods producer
+    Z_h        = scalar > 0, total factor productivity parameter in Home
+                 final goods producer production function
+    gamma_h    = scalar in (0, 1), capital share of income in Home Cobb-
+                 Douglas production function
+    delta_h    = scalar in [0,1], model-period depreciation rate of Home
+                 final goods capital
+    alpha_f    = scalar in (0, 1), share parameter in CES production
+                 function of Foreign intermediate goods producer
+    phi_f      = scalar >= 1, elasticity of substitution in CES
+                 production function of Foreign intermediate goods
+                 producer
+    Z_f        = scalar > 0, total factor productivity parameter in
+                 Foreign final goods producer production function
+    gamma_f    = scalar in (0, 1), capital share of income in Foreign
+                 Cobb-Douglas production function
+    delta_f    = scalar in [0,1], model-period depreciation rate of
+                 Foreign final goods capital
+    tol_outer  = scalar > 0, tolerance level for steady-state outer-loop
+                 convergence
+    tol_inner  = scalar > 0, tolerance level for inner-loop root finder
+    xi         = scalar in (0, 1], outer loop updating parameter
+    maxiter    = integer >= 1, maximum number of iterations for outer
+                 loop fixed point algorithm
+    EulDiff    = boolean, =True if use simple differences in Euler
+                 errors. Otherwise, use percent deviation form
+    dist       = scalar > 0, distance measure between initial guess and
+                 predicted value
+    SS_iter    = integer >= 0, iteration number of fixed point algorithm
+    rhrfq_init = (3,) vector, initial values of (rh, rf, q)
+    rh_comp    = scalar > -delta_h, Home composite consumption
+    rf_comp    = scalar > -delta_f, Foreign composite consumption
+    KL_rat_h   = scalar > 0, Home final goods capital labor ratio
+    KL_rat_f   = scalar > 0, Foreign final goods capital labor ratio
+    w_h        = scalar > 0, steady-state Home wage
+    w_f        = scalar > 0, steady-state Foreign wage
+    r_h_path   = (S,) vector, steady-state Home composite interest rate
+                 over the periods of an agent's life
+    w_h_path   = (S,) vector, steady-state Home wage over the periods
+                 of an agent's life
+    bhvec_init = (S-1,) vector, initial guess for Home steady-state
+                 lifetime savings vector
+    cbh_args   = length 6 tuple, arguments to pass in to hh.get_cbvec()
+    bhvec      = (S-1,) vector, steady-state Home household savings for
+                 each age (b_2, b_3, ...b_S)
+    chvec      = (S,) vector, steady-state Home household consumption
+                 for each age (c_1, c_2, ...c_S)
+    bh_errors  = (S-1,) vector, steady-state Home household Euler
+                 equation errors for savings decision
+    success_h  = boolean, =True if root finder for inner loop Home
+                 household savings decision converged
+    r_f_path   = (S,) vector, steady-state Foreign composite interest
+                 rate over the periods of an agent's life
+    w_f_path   = (S,) vector, steady-state Foreign wage over the periods
+                 of an agent's life
+    bfvec_init = (S-1,) vector, initial guess for Foreign steady-state
+                 lifetime savings vector
+    cbf_args   = length 6 tuple, arguments to pass in to hh.get_cbvec()
+    bfvec      = (S-1,) vector, steady-state Foreign household savings
+                 for each age (b_2, b_3, ...b_S)
+    cfvec      = (S,) vector, steady-state Foreign household consumption
+                 for each age (c_1, c_2, ...c_S)
+    bf_errors  = (S-1,) vector, steady-state Foreign household Euler
+                 equation errors for savings decision
+    success_f  = boolean, =True if root finder for inner loop Foreign
+                 household savings decision converged
+    L_h        = scalar > 0, steady-state Home aggregate labor
+    L_f        = scalar > 0, steady-state Foreign aggregate labor
+    K_h        = scalar > 0, steady-state Home final goods capital stock
+    K_f        = scalar > 0, steady-state Foreign final goods capital
+                 stock
+    K_hh       = scalar > 0, steady-state total Home country savings
+                 allocated to Home country intermed't goods production
+    K_ff       = scalar > 0, steady-state total Foreign country savings
+                 allocated to Foreign country int'd't goods production
+    K_fh       = scalar > 0, steady-state total Home country savings
+                 allocated to Foreign country int'd't goods production
+    K_hf       = scalar > 0, steady-state total Foreign country savings
+                 allocated to Home country intermed't goods production
+    rh_new     = scalar > 0, new predicted value for rh_ss
+    rf_new     = scalar > 0, new predicted value for rf_ss
+    q_new      = scalar > 0, new predicted value for q_ss
+    rhrfq_new  = (3,) vector, new values of (rh, rf, q)
+    success    = boolean, =True if outer loop algorithm converged
+    rh_ss      = scalar > 0, steady-state return on Home savings
+    rf_ss      = scalar > 0, steady-state return on Foreign savings
+    q_ss       = scalar > 0, real exchange rate # Foreign consumption
+                 goods per 1 Domestic consumption good
+
+    FILES CREATED BY THIS FUNCTION: None
+
+    RETURNS: rh_ss, rf_ss, q_ss, dist, success
     --------------------------------------------------------------------
     '''
     (nhvec, nfvec, beta, sigma, alpha_h, phi_h, Z_h, gamma_h, delta_h,
@@ -229,8 +281,8 @@ def outer_loop(rh_init, rf_init, q_init, args):
         dist = ((rhrfq_new - rhrfq_init) ** 2).sum()
         # Update initial values of outer loop variables
         rhrfq_init = xi * rhrfq_new + (1 - xi) * rhrfq_init
-        print('SS iter=', SS_iter, ', Dist=', dist, ', (r_h, r_f, q)=',
-              rhrfq_init)
+        print('SS iter=', SS_iter, ', Dist=', '%10.4e' % (dist))
+        # print(', (r_h, r_f, q)=', rhrfq_init)
 
     if dist >= tol_outer:
         success = False
@@ -248,58 +300,142 @@ def get_SS(rh_ss_guess, rf_ss_guess, q_ss_guess, args, graphs=False):
     model with exogenous labor supply using one root finder in bvec
     --------------------------------------------------------------------
     INPUTS:
-    bss_guess = (S-1,) vector, initial guess for b_ss
-    args      = length 8 tuple,
-                (nvec, beta, sigma, A, alpha, delta, SS_tol, SS_EulDiff)
-    graphs    = boolean, =True if output steady-state graphs
+    rh_ss_guess = scalar > 0, initial guess for rh_ss
+    rf_ss_guess = scalar > 0, initial guess for rf_ss
+    q_ss_guess  = scalar > 0, initial guess for q_ss
+    args        = length 19 tuple, arguments passed in to get_SS()
+    graphs      = boolean, =True if output steady-state graphs
 
     OTHER FUNCTIONS AND FILES CALLED BY THIS FUNCTION:
-        SS_EulErrs()
-        aggr.get_K()
+        outer_loop()
+        firms.get_comp_r()
+        firms.get_KLratio()
+        firms.get_w_KL()
+        hh.get_cbvec()
         aggr.get_L()
         aggr.get_Y()
+        firms.get_K_ownown()
         aggr.get_C()
-        firms.get_r()
-        firms.get_w()
-        hh.get_cons()
+        aggr.get_I()
+        aggr.get_NX()
         utils.print_time()
         get_ss_graphs()
 
     OBJECTS CREATED WITHIN FUNCTION:
-    start_time = scalar > 0, clock time at beginning of program
-    nvec       = (S,) vector, exogenous lifetime labor supply n_s
-    beta       = scalar in (0,1), discount factor for each model per
-    sigma      = scalar > 0, coefficient of relative risk aversion
-    A          = scalar > 0, total factor productivity parameter in
-                 firms' production function
-    alpha      = scalar in (0,1), capital share of income
-    delta      = scalar in [0,1], model-period depreciation rate of
-                 capital
-    SS_tol     = scalar > 0, tolerance level for steady-state fsolve
-    SS_EulDiff = Boolean, =True if want difference version of Euler
-                 errors beta*(1+r)*u'(c2) - u'(c1), =False if want ratio
-                 version [beta*(1+r)*u'(c2)]/[u'(c1)] - 1
-    b_args     = length 7 tuple, args passed to opt.root(SS_EulErrs,...)
-    results_b  = results object, output from opt.root(SS_EulErrs,...)
-    b_ss       = (S-1,) vector, steady-state savings b_{s+1}
-    K_ss       = scalar > 0, steady-state aggregate capital stock
-    Kss_cstr   = boolean, =True if K_ss < epsilon
-    L          = scalar > 0, exogenous aggregate labor
-    r_params   = length 3 tuple, (A, alpha, delta)
-    r_ss       = scalar > 0, steady-state interest rate
-    w_params   = length 2 tuple, (A, alpha)
-    w_ss       = scalar > 0, steady-state wage
-    c_args     = length 3 tuple, (nvec, r_ss, w_ss)
-    c_ss       = (S,) vector, steady-state individual consumption c_s
-    Y_params   = length 2 tuple, (A, alpha)
-    Y_ss       = scalar > 0, steady-state aggregate output (GDP)
-    C_ss       = scalar > 0, steady-state aggregate consumption
-    b_err_ss   = (S-1,) vector, Euler errors associated with b_ss
-    RCerr_ss   = scalar, steady-state resource constraint error
-    ss_time    = scalar > 0, time elapsed during SS computation
-                 (in seconds)
-    ss_output  = length 10 dict, steady-state objects {b_ss, c_ss, w_ss,
-                 r_ss, K_ss, Y_ss, C_ss, b_err_ss, RCerr_ss, ss_time}
+    start_time  = scalar > 0, clock time at beginning of program
+    S           = integer in [3,80], number of periods an individual
+                  lives
+    nhvec       = (S,) vector, exogenous Home labor supply n_{h,s,t}
+    nfvec       = (S,) vector, exogenous Foreign labor supply n_{h,s,t}
+    beta        = scalar in (0,1), discount factor for each model period
+    sigma       = scalar > 0, coefficient of relative risk aversion
+    alpha_h     = scalar in (0, 1), share parameter in CES production
+                  function of Home intermediate goods producer
+    phi_h       = scalar >= 1, elasticity of substitution in CES
+                  production function of Home intermediate goods
+                  producer
+    Z_h         = scalar > 0, total factor productivity parameter in
+                  Home final goods producer production function
+    gamma_h     = scalar in (0, 1), capital share of income in Home
+                  Cobb-Douglas production function
+    delta_h     = scalar in [0,1], model-period depreciation rate of
+                  Home final goods capital
+    alpha_f     = scalar in (0, 1), share parameter in CES production
+                  function of Foreign intermediate goods producer
+    phi_f       = scalar >= 1, elasticity of substitution in CES
+                  production function of Foreign intermediate goods
+                  producer
+    Z_f         = scalar > 0, total factor productivity parameter in
+                  Foreign final goods producer production function
+    gamma_f     = scalar in (0, 1), capital share of income in Foreign
+                  Cobb-Douglas production function
+    delta_f     = scalar in [0,1], model-period depreciation rate of
+                  Foreign final goods capital
+    tol_outer   = scalar > 0, tolerance level for steady-state outer-
+                  loop convergence
+    tol_inner   = scalar > 0, tolerance level for inner-loop root finder
+    xi          = scalar in (0, 1], outer loop updating parameter
+    maxiter     = integer >= 1, maximum number of iterations for outer
+                  loop fixed point algorithm
+    EulDiff     = boolean, =True if use simple differences in Euler
+                  errors. Otherwise, use percent deviation form
+    results_ol  = length 5 tuple, results from outer_loop() function
+    rh_ss       = scalar > 0, steady-state return on Home savings
+    rf_ss       = scalar > 0, steady-state return on Foreign savings
+    q_ss        = scalar > 0, real exchange rate # Foreign consumption
+                  goods per 1 Domestic consumption good
+    ol_dist     = scalar > 0, outer loop distance measure
+    ol_success  = boolean, =True if outer loop converged
+    r_ss        = scalar > -delta_h, steady-state Home composite
+                  interest rate
+    rstar_ss    = scalar > -delta_f, steady-state Foreign composite
+                  interest rate
+    KL_rat_h    = scalar > 0, Home final goods capital labor ratio
+    KL_rat_f    = scalar > 0, Foreign final goods capital labor ratio
+    wh_ss       = scalar > 0, steady-state Home wage
+    wf_ss       = scalar > 0, steady-state Foreign wage
+    r_h_path    = (S,) vector, steady-state Home composite interest rate
+                  over the periods of an agent's life
+    w_h_path    = (S,) vector, steady-state Home wage over the periods
+                  of an agent's life
+    cbh_args    = length 6 tuple, arguments to pass into hh.get_cbvec()
+    ch_ss       = (S,) vector, steady-state Home household consumption
+                  for each age (c_1, c_2, ...c_S)
+    bh_ss       = (S-1,) vector, steady-state Home household savings
+                  for each age (b_2, b_3, ...b_S)
+    bhss_errors = (S-1,) vector, steady-state Home household Euler
+                  equation errors for savings decision
+    success_h   = boolean, =True if root finder for inner loop Home
+                  household savings decision converged
+    r_f_path    = (S,) vector, steady-state Foreign composite interest
+                  rate over the periods of an agent's life
+    w_f_path    = (S,) vector, steady-state Foreign wage over the
+                  periods of an agent's life
+    cbf_args    = length 6 tuple, arguments to pass into hh.get_cbvec()
+    cf_ss       = (S,) vector, steady-state Foreign household
+                  consumption for each age (c_1, c_2, ...c_S)
+    bf_ss       = (S-1,) vector, steady-state Foreign household savings
+                  for each age (b_2, b_3, ...b_S)
+    bfss_errors = (S-1,) vector, steady-state Foreign household Euler
+                  equation errors for savings decision
+    success_f   = boolean, =True if root finder for inner loop Foreign
+                  household savings decision converged
+    L_h_ss      = scalar > 0, steady-state Home aggregate labor
+    L_f_ss      = scalar > 0, steady-state Foreign aggregate labor
+    K_h_ss      = scalar > 0, steady-state Home final goods capital
+                  stock
+    K_f_ss      = scalar > 0, steady-state Foreign final goods capital
+                  stock
+    Yh_ss       = scalar > 0, steady-state Home aggregate final goods
+                  output (GDP)
+    Yf_ss       = scalar > 0, steady-state Foreign aggregate final goods
+                  output (GDP)
+    K_hh_ss     = scalar > 0, steady-state total Home country savings
+                  allocated to Home country intermed't goods production
+    K_ff_ss     = scalar > 0, steady-state total Foreign country savings
+                  allocated to Foreign country int'd't goods production
+    K_fh_ss     = scalar > 0, steady-state total Home country savings
+                  allocated to Foreign country int'd't goods production
+    K_hf_ss     = scalar > 0, steady-state total Foreign country savings
+                  allocated to Home country intermed't goods production
+    Ch_ss       = scalar > 0, steady-state Home aggregate consumption
+    Cf_ss       = scalar > 0, steady-state Foreign aggregate consumption
+    Ih_ss       = scalar, steady-state Home aggregate investment
+    If_ss       = scalar, steady-state Foreign aggregate investment
+    NXh_ss      = scalar, steady-state Home net exports
+    NXf_ss      = scalar, steady-state Foreign net exports
+    RC_h_err_ss = scalar, steady-state Home goods market clearing
+                  (resource constraint) error
+    RC_f_err_ss = scalar, steady-state Foreign goods market clearing
+                  (resource constraint) error
+    ss_time     = scalar > 0, time elapsed during SS computation
+                  (in seconds)
+    ss_output   = length 30 dict, steady-state equilibrium objects
+                  {bh_ss, ch_ss, bhss_errors, bf_ss, cf_ss, bfss_errors,
+                  wh_ss, rh_ss, r_ss, q_ss, wf_ss, rf_ss, rstar_ss,
+                  L_h_ss, K_h_ss, K_hh_ss, K_fh_ss, Yh_ss, Ih_ss,
+                  NXh_ss, L_f_ss, K_f_ss, K_ff_ss, K_hf_ss, Yf_ss,
+                  If_ss, NXf_ss, RC_h_err_ss, RC_f_err_ss, ss_time}
 
     FILES CREATED BY THIS FUNCTION: None
 
@@ -356,16 +492,22 @@ def get_SS(rh_ss_guess, rf_ss_guess, q_ss_guess, args, graphs=False):
     K_fh_ss = bh_ss.sum() - K_hh_ss
     K_hf_ss = bf_ss.sum() - K_ff_ss
     # Solve for Home and Foreign aggregate consumption
-    Ch_ss = ch_ss.sum()
-    Cf_ss = cf_ss.sum()
+    Ch_ss = aggr.get_C(ch_ss)
+    Cf_ss = aggr.get_C(cf_ss)
+    # Solve for Home and Foreign aggregate investment
+    Ih_ss = aggr.get_I(K_h_ss, K_h_ss, delta_h)
+    If_ss = aggr.get_I(K_f_ss, K_f_ss, delta_f)
+    # Solve for Home and Foreign net exports
+    NXh_ss = aggr.get_NX(K_hh_ss, K_fh_ss, K_hh_ss, K_fh_ss, K_h_ss,
+                         K_h_ss, r_ss, rh_ss)
+    NXf_ss = aggr.get_NX(K_ff_ss, K_hf_ss, K_ff_ss, K_hf_ss, K_f_ss,
+                         K_f_ss, rstar_ss, rf_ss)
+    # NXh_ss = r_ss * K_h_ss - rh_ss * (K_hh_ss + K_fh_ss)
+    # NXf_ss = rstar_ss * K_f_ss - rf_ss * (K_ff_ss + K_hf_ss)
     # Solve for Home and Foreign goods market clearing (resource
     # constraint) errors
-    # RC_h_err_ss = Yh_ss - Ch_ss - delta_h * K_h_ss
-    # RC_f_err_ss = Yf_ss - Cf_ss - delta_f * K_f_ss
-    RC_h_err_ss = (Yh_ss - Ch_ss - (r_ss + delta_h) * K_h_ss +
-                   rh_ss * (K_hh_ss + K_fh_ss))
-    RC_f_err_ss = (Yf_ss - Cf_ss - (rstar_ss + delta_f) * K_f_ss +
-                   rf_ss * (K_ff_ss + K_hf_ss))
+    RC_h_err_ss = Yh_ss - Ch_ss - Ih_ss - NXh_ss
+    RC_f_err_ss = Yf_ss - Cf_ss - If_ss - NXf_ss
 
     ss_time = time.clock() - start_time
 
@@ -375,20 +517,24 @@ def get_SS(rh_ss_guess, rf_ss_guess, q_ss_guess, args, graphs=False):
          'wh_ss': wh_ss, 'rh_ss': rh_ss, 'r_ss': r_ss, 'q_ss': q_ss,
          'wf_ss': wf_ss, 'rf_ss': rf_ss, 'rstar_ss': rstar_ss,
          'L_h_ss': L_h_ss, 'K_h_ss': K_h_ss, 'K_hh_ss': K_hh_ss,
-         'K_fh_ss': K_fh_ss, 'Yh_ss': Yh_ss, 'L_f_ss': L_f_ss,
-         'K_f_ss': K_f_ss, 'K_ff_ss': K_ff_ss, 'K_hf_ss': K_hf_ss,
-         'Yf_ss': Yf_ss, 'RC_h_err_ss': RC_h_err_ss,
+         'K_fh_ss': K_fh_ss, 'Yh_ss': Yh_ss, 'Ih_ss': Ih_ss,
+         'NXh_ss': NXh_ss, 'L_f_ss': L_f_ss, 'K_f_ss': K_f_ss,
+         'K_ff_ss': K_ff_ss, 'K_hf_ss': K_hf_ss, 'Yf_ss': Yf_ss,
+         'If_ss': If_ss, 'NXf_ss': NXf_ss, 'RC_h_err_ss': RC_h_err_ss,
          'RC_f_err_ss': RC_f_err_ss, 'ss_time': ss_time}
 
-    print('bh_ss is: ', bh_ss)
-    print('bf_ss is: ', bf_ss)
-    print('K_h_ss=', K_h_ss, ', rh_ss=', rh_ss, ', r_ss=', r_ss,
-          ', wh_ss=', wh_ss)
-    print('K_f_ss=', K_f_ss, ', rf_ss=', rf_ss, ', rstar_ss=', rstar_ss,
-          ', wf_ss=', wf_ss)
-    print('Max. abs. savings Euler error is: ',
+    with np.printoptions(precision=4):
+        print('bh_ss is: ', bh_ss)
+        print('bf_ss is: ', bf_ss)
+    print('K_h_ss=', '%10.4f' % K_h_ss, ', rh_ss=', '%10.4f' % rh_ss,
+          ', r_ss=', '%10.4f' % r_ss, ', wh_ss=', '%10.4f' % wh_ss)
+    print('K_f_ss=', '%10.4f' % K_f_ss, ', rf_ss=', '%10.4f' % rf_ss,
+          ', r*_ss=', '%10.4f' % rstar_ss,
+          ', wf_ss=', '%10.4f' % wf_ss)
+    print('Real exchange rate=', '%10.4f' % q_ss)
+    print('Max. abs. savings Euler error is: ', '%10.4e' %
           np.absolute(np.append(bhss_errors, bfss_errors)).max())
-    print('Max. abs. resource constraint error is: ',
+    print('Max. abs. resource constraint error is: ', '%10.4e' %
           np.absolute(np.append(RC_h_err_ss, RC_f_err_ss)).max())
 
     # Print SS computation time

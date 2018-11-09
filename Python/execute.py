@@ -7,14 +7,15 @@ textbook.
 
 This Python script imports the following module(s):
     SS.py
+
     TPI.py
     aggregates.py
     utilities.py
 
 This Python script calls the following function(s):
-    ss.feasible()
     ss.get_SS()
     utils.compare_args()
+
     aggr.get_K()
     tpi.get_TPI()
 
@@ -39,25 +40,53 @@ import utilities as utils
 ------------------------------------------------------------------------
 Declare parameters
 ------------------------------------------------------------------------
-S             = integer in [3,80], number of periods an individual lives
-beta_annual   = scalar in (0,1), discount factor for one year
-beta          = scalar in (0,1), discount factor for each model period
-sigma         = scalar > 0, coefficient of relative risk aversion
-ncutper      = int >= 2, age at which labor supply is exogenously
-               reduced
-nvec         = [S,] vector, exogenous labor supply n_{s,t}
-A             = scalar > 0, total factor productivity parameter in
-                firms' production function
-alpha         = scalar in (0,1), capital share of income
-delta_annual  = scalar in [0,1], one-year depreciation rate of capital
-delta         = scalar in [0,1], model-period depreciation rate of
-                capital
-SS_solve      = boolean, =True if want to solve for steady-state
-                solution, otherwise retrieve solutions from pickle
-SS_tol        = scalar > 0, tolerance level for steady-state fsolve
+S              = integer in [3,80], number of periods an individual
+                 lives
+beta_annual    = scalar in (0,1), discount factor for one year
+beta           = scalar in (0,1), discount factor for each model period
+sigma          = scalar > 0, coefficient of relative risk aversion
+nhcutper       = int >= 2, age at which Home labor supply is exogenously
+                 reduced
+nhvec          = (S,) vector, exogenous Home labor supply n_{h,s,t}
+nfcutper       = int >= 2, age at which Foreign labor supply is
+                 exogenously reduced
+nfvec          = [S,] vector, exogenous Foreign labor supply n_{f,s,t}
+alpha_h        = scalar in (0, 1), share parameter in CES production
+                 function of Home intermediate goods producer
+phi_h          = scalar >= 1, elasticity of substitution in CES
+                 production function of Home intermediate goods producer
+Z_h            = scalar > 0, total factor productivity parameter in
+                 Home final goods producer production function
+gamma_h        = scalar in (0, 1), capital share of income in Home Cobb-
+                 Douglas production function
+delta_h_annual = scalar in [0,1], one-year depreciation rate of Home
+                 final goods capital
+delta_h        = scalar in [0,1], model-period depreciation rate of Home
+                 final goods capital
+alpha_f        = scalar in (0, 1), share parameter in CES production
+                 function of Foreign intermediate goods producer
+phi_f          = scalar >= 1, elasticity of substitution in CES prod
+                 function of Foreign intermediate goods producer
+Z_f            = scalar > 0, total factor productivity parameter in
+                 Foreign final goods producer production function
+gamma_f        = scalar in (0, 1), capital share of income in Foreign
+                 Cobb-Douglas production function
+delta_f_annual = scalar in [0,1], one-year depreciation rate of Foreign
+                 final goods capital
+delta_f        = scalar in [0,1], model-period depreciation rate of
+                 Foreign final goods capital
+SS_solve       = boolean, =True if want to solve for steady-state
+                 solution, otherwise retrieve solutions from pickle
+SS_maxiter     = integer >= 1, maximum number of iterations for steady-
+                 state outer loop fixed point algorithm
+SS_tol_outer   = scalar > 0, tolerance level for steady-state outer-loop
+                 convergence
+SS_tol_inner   = scalar > 0, tolerance level for inner-loop root finder
+xi_SS          = scalar in (0, 1], steady-state outer loop updating
+                 parameter
 SS_graphs     = boolean, =True if want graphs of steady-state objects
 SS_EulDiff    = boolean, =True if use simple differences in Euler
-                errors. Otherwise, use percent deviation form.
+                errors. Otherwise, use percent deviation form
 T             = integer > S, number of time periods until steady state
 TPI_solve     = boolean, =True if want to solve TPI after solving SS
 TPI_tol       = scalar > 0, tolerance level for fsolve's in TPI
@@ -109,7 +138,7 @@ delta_f = 1 - ((1 - delta_f_annual) ** (80 / S))
 # SS parameters
 SS_solve = True
 SS_maxiter = 200
-SS_tol_outer = 1e-9
+SS_tol_outer = 1e-13
 SS_tol_inner = 1e-13
 xi_SS = 0.2
 SS_graphs = True
@@ -133,22 +162,20 @@ ss_output_fldr = string, cur_path extension of SS output folder path
 ss_output_dir  = string, full path name of SS output folder
 ss_outputfile  = string, path name of file for SS output objects
 ss_paramsfile  = string, path name of file for SS parameter objects
-b_guess        = (S-1,) vector, initial guess for steady-state household
-                 savings b_{s+1}
-f_params       = length 4 tuple, (nvec, A, alpha, delta)
-cg_cstr        = (S,) boolean vector, =True for cvec implied by b_guess
-                 for which c_s<=0
-Kg_cstr        = boolean, =True if K implied by b_guess is K<epsilon
-bg_cstr        = (S-1,) boolean vector, =True for b_guess that could
-                 have caused c_s<=0 or all elements =True if K<epsilon
-err_msg        = string, error message text
-ss_args        = length 8 tuple, arguments to be passed in to
+rh_ss_guess    = scalar > 0, initial guess for rh_ss
+rf_ss_guess    = scalar > 0, initial guess for rf_ss
+q_ss_guess     = scalar > 0, initial guess for q_ss
+ss_args        = length 19 tuple, arguments to be passed in to
                  ss.get_SS()
-ss_output      = length 10 dict, steady-state objects {b_ss, c_ss, w_ss,
-                 r_ss, K_ss, Y_ss, C_ss, b_err_ss, RCerr_ss, ss_time}
+ss_output      = length 30 dict, steady-state equilibrium objects
+                 {bh_ss, ch_ss, bhss_errors, bf_ss, cf_ss, bfss_errors,
+                 wh_ss, rh_ss, r_ss, q_ss, wf_ss, rf_ss, rstar_ss,
+                 L_h_ss, K_h_ss, K_hh_ss, K_fh_ss, Yh_ss, Ih_ss, NXh_ss,
+                 L_f_ss, K_f_ss, K_ff_ss, K_hf_ss, Yf_ss, If_ss, NXf_ss,
+                 RC_h_err_ss, RC_f_err_ss, ss_time}
 ss_vars_exst   = boolean, =True if ss_vars.pkl exists
 ss_args_exst   = boolean, =True if ss_args.pkl exists
-cur_ss_args    = length 8 tuple, current args to be passed in to
+cur_ss_args    = length 19 tuple, current args to be passed in to
                  ss.get_SS()
 args_same      = boolean, =True if ss_args == cur_ss_args
 ------------------------------------------------------------------------
@@ -191,7 +218,7 @@ else:
         err_msg = ('ERROR: The SS output files do not exist and ' +
                    'SS_solve=False. Must set SS_solve=True and ' +
                    'compute steady-state solution.')
-        raise RuntimeError(err_msg)
+        raise ValueError(err_msg)
     else:
         # If the files do exist, make sure that none of the parameters
         # changed from the parameters used in the solution for the saved
@@ -215,7 +242,7 @@ else:
                        'ss_args that produced ss_output. Must solve ' +
                        'for SS before solving transition path. Set ' +
                        'SS_solve=True.')
-            raise RuntimeError(err_msg)
+            raise ValueError(err_msg)
 
 # '''
 # ------------------------------------------------------------------------
